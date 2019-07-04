@@ -46,7 +46,7 @@ public class Bot extends TelegramLongPollingBot {
                             if (text.equalsIgnoreCase("лол") || text.equalsIgnoreCase("кек") || text.contains("хаха") || text.contains("ХАХА")
                                     || text.equalsIgnoreCase("смешно")
                                     ) {
-                                if (jokesCache.save(m.getMessageId())) {
+                                if (jokesCache.save(m.getMessageId(), m.getText())) {
                                     sendMsg(getText(), message.getChatId());
                                 }
                             }

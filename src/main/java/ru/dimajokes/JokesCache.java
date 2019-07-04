@@ -12,6 +12,7 @@ public class JokesCache {
 
     private static final String PREFIX = "jokes";
     private static final String PREFIX_IDS = "jokesIds";
+    private static final String JOKE = "joke";
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyy");
 
     @Autowired
@@ -27,9 +28,10 @@ public class JokesCache {
         return PREFIX + "."+sdf.format(new Date());
     }
 
-    public boolean save(Integer messageId) {
+    public boolean save(Integer messageId, String text) {
         if (!redisTemplate.opsForSet().isMember(PREFIX_IDS, messageId)) {
             redisTemplate.opsForSet().add(PREFIX_IDS, messageId);
+            redisTemplate.opsForValue().set(JOKE + "." + messageId, text);
             return true;
         }
         return false;
