@@ -42,7 +42,10 @@ public class Bot extends TelegramLongPollingBot {
                 Optional.ofNullable(message.getReplyToMessage())
                         .filter(m -> m.getFrom().getUserName().equalsIgnoreCase("DmitrySedykh"))
                         .ifPresent(m -> {
-                            if (message.getText().equalsIgnoreCase("лол") || message.getText().equalsIgnoreCase("кек") || message.getText().contains("хаха") || message.getText().contains("ХАХА")) {
+                            String text = message.getText();
+                            if (text.equalsIgnoreCase("лол") || text.equalsIgnoreCase("кек") || text.contains("хаха") || text.contains("ХАХА")
+                                    || text.equalsIgnoreCase("смешно")
+                                    ) {
                                 if (jokesCache.save(m.getMessageId())) {
                                     sendMsg(getText(), message.getChatId());
                                 }
