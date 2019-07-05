@@ -21,6 +21,7 @@ public class Bot extends TelegramLongPollingBot {
     private final String[] msgs = new String[] {"Да ладно, Димон опять пошутил! ", "Новая шутейка от Дмитрия. ", "Остановите его! Снова юмор! "};
     private final String[] suffix = new String[] {"И это уже ", "", "Счетчик улетает в космос! "};
     private final String end = " раз за день!";
+    private Long chatId;
 
     private void sendMsg(String s, Long chatId) {
         log.info("send message {}", s);
@@ -40,8 +41,11 @@ public class Bot extends TelegramLongPollingBot {
         try {
             if (update.hasMessage()) {
                 Message message = update.getMessage();
+                if (chatId == null) {
+                    chatId = jokesCache.getChatId();
+                }
                 Optional.ofNullable(message.getReplyToMessage())
-                        .filter(m -> m.getFrom().getUserName().equalsIgnoreCase("SedykhDmitry"))
+                        .filter(m -> m.getChatId().equals(chatId))
                         .ifPresent(m -> {
                             jokesCache.saveChatId(m.getChatId());
                             String text = message.getText();
