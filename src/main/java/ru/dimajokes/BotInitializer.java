@@ -1,13 +1,14 @@
 package ru.dimajokes;
 
-import lombok.extern.slf4j.Slf4j;
+import javax.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
-import javax.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Created by UMS on 5/7/2019.
@@ -26,7 +27,7 @@ public class BotInitializer {
         ApiContextInitializer.init();
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
         try {
-            bot = new Bot(jokesCache);
+            bot = new Bot(jokesCache, null);
             telegramBotsApi.registerBot(bot);
         } catch (TelegramApiRequestException e) {
             log.error("Error on init telegram bot", e);
