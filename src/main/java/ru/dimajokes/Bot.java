@@ -1,15 +1,16 @@
 package ru.dimajokes;
 
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
+
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.Optional;
-import java.util.concurrent.ThreadLocalRandom;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @AllArgsConstructor
@@ -40,11 +41,12 @@ public class Bot extends TelegramLongPollingBot {
             if (update.hasMessage()) {
                 Message message = update.getMessage();
                 Optional.ofNullable(message.getReplyToMessage())
-                        .filter(m -> m.getFrom().getUserName().equalsIgnoreCase("DmitrySedykh"))
+                        .filter(m -> m.getFrom().getUserName().equalsIgnoreCase("SedykhDmitry"))
                         .ifPresent(m -> {
+                            jokesCache.saveChatId(m.getChatId());
                             String text = message.getText();
                             if (text.equalsIgnoreCase("лол") || text.equalsIgnoreCase("кек") || text.contains("хаха") || text.contains("ХАХА")
-                                    || text.equalsIgnoreCase("смешно")
+                                    || text.equalsIgnoreCase("смешно") || text.contains("шутил")
                                     ) {
                                 if (jokesCache.save(m.getMessageId(), m.getText())) {
                                     sendMsg(getText(), message.getChatId());

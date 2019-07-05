@@ -1,15 +1,16 @@
 package ru.dimajokes;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 @Component
 public class JokesCache {
 
+    public static final String CHAT_ID = "CHAT_ID";
     private static final String PREFIX = "jokes";
     private static final String PREFIX_IDS = "jokesIds";
     private static final String JOKE = "joke";
@@ -35,5 +36,13 @@ public class JokesCache {
             return true;
         }
         return false;
+    }
+
+    public void saveChatId(long chatId) {
+        redisTemplate.opsForValue().set(CHAT_ID, chatId);
+    }
+
+    public long getChatId() {
+        return ((Number)redisTemplate.opsForValue().get(CHAT_ID)).longValue();
     }
 }
