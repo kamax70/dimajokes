@@ -45,12 +45,11 @@ public class Bot extends TelegramLongPollingBot {
                     chatId = jokesCache.getChatId();
                 }
                 Optional.ofNullable(message.getReplyToMessage())
-                        .filter(m -> m.getChatId().equals(chatId))
+                        .filter(m -> m.getFrom().getId().longValue() == chatId)
                         .ifPresent(m -> {
-                            jokesCache.saveChatId(m.getChatId());
                             String text = message.getText();
                             if (text.equalsIgnoreCase("лол") || text.equalsIgnoreCase("кек") || text.contains("хаха") || text.contains("ХАХА")
-                                    || text.equalsIgnoreCase("смешно") || text.contains("шутил")
+                                    || text.equalsIgnoreCase("смешно") || text.equalsIgnoreCase("смишно") || text.contains("шутил")
                                     ) {
                                 if (jokesCache.save(m.getMessageId(), m.getText())) {
                                     sendMsg(getText(), message.getChatId());
