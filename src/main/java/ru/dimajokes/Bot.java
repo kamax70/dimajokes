@@ -1,18 +1,20 @@
 package ru.dimajokes;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static ru.dimajokes.MessageUtils.testStringForKeywords;
+
+import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
+
+import javax.annotation.PostConstruct;
+
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import javax.annotation.PostConstruct;
-import java.util.Optional;
-import java.util.concurrent.ThreadLocalRandom;
-
-import static ru.dimajokes.MessageUtils.testStringForKeywords;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -28,6 +30,7 @@ public class Bot extends TelegramLongPollingBot {
 
     @PostConstruct
     public void init() {
+        log.info("Getting chat_id from redis");
         chatId = jokesCache.getChatId();
     }
 
@@ -36,6 +39,9 @@ public class Bot extends TelegramLongPollingBot {
         try {
             if (update.hasMessage()) {
                 Message message = update.getMessage();
+                if (chatId == null) {
+                    chatId = jokesCache.getChatId();
+                }
                 Optional.ofNullable(message.getReplyToMessage())
                         .filter(m -> m.getFrom().getId().longValue() == chatId)
                         .ifPresent(m -> {
