@@ -1,7 +1,12 @@
 package ru.dimajokes;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static ru.dimajokes.MessageUtils.testStringForKeywords;
+
+import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
+
+import javax.annotation.PostConstruct;
+
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -12,6 +17,8 @@ import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static ru.dimajokes.MessageUtils.testStringForKeywords;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -24,7 +31,6 @@ public class Bot extends TelegramLongPollingBot {
     private final String[] suffix = new String[]{"И это уже ", "", "Счетчик улетает в космос! "};
     private final String end = " раз за день!";
     private Long chatId;
-
     @Override
     public void onUpdateReceived(Update update) {
         try {
