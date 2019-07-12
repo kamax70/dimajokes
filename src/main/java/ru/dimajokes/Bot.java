@@ -8,7 +8,6 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import javax.annotation.PostConstruct;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -26,16 +25,14 @@ public class Bot extends TelegramLongPollingBot {
     private final String end = " раз за день!";
     private Long chatId;
 
-    @PostConstruct
-    public void init() {
-        chatId = jokesCache.getChatId();
-    }
-
     @Override
     public void onUpdateReceived(Update update) {
         try {
             if (update.hasMessage()) {
                 Message message = update.getMessage();
+                if (chatId == null) {
+                    chatId = jokesCache.getChatId();
+                }
                 Optional.ofNullable(message.getReplyToMessage())
                         .filter(m -> m.getFrom().getId().longValue() == chatId)
                         .ifPresent(m -> {
