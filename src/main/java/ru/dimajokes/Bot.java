@@ -13,6 +13,10 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
+
+import static ru.dimajokes.MessageUtils.testStringForKeywords;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,13 +31,6 @@ public class Bot extends TelegramLongPollingBot {
     private final String[] suffix = new String[]{"И это уже ", "", "Счетчик улетает в космос! "};
     private final String end = " раз за день!";
     private Long chatId;
-
-    @PostConstruct
-    public void init() {
-        log.info("Getting chat_id from redis");
-        chatId = jokesCache.getChatId();
-    }
-
     @Override
     public void onUpdateReceived(Update update) {
         try {

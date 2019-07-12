@@ -97,9 +97,9 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.github.fppt</groupId>
-			<artifactId>jedis-mock</artifactId>
-			<version>0.1.14</version>
+			<groupId>com.github.kstyrc</groupId>
+			<artifactId>embedded-redis</artifactId>
+			<version>0.6</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

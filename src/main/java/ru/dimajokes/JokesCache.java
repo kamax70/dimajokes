@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 import static java.util.Optional.ofNullable;
@@ -32,7 +32,7 @@ public class JokesCache {
     }
 
     public String getKey() {
-        return PREFIX + SEPARATOR + sdf.format(Instant.now());
+        return PREFIX + SEPARATOR + sdf.format(LocalDate.now());
     }
 
     @SuppressWarnings("unchecked")
