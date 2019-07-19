@@ -44,6 +44,8 @@ public class RedisSpringConfiguration {
         redisTemplate.setEnableTransactionSupport(false);
         redisTemplate.setKeySerializer(redisTemplate.getStringSerializer());
         redisTemplate.setValueSerializer(redisTemplate.getStringSerializer());
+        redisTemplate.setHashKeySerializer(redisTemplate.getStringSerializer());
+        redisTemplate.setHashValueSerializer(redisTemplate.getStringSerializer());
 
         redisTemplate.setConnectionFactory(factory);
 
