@@ -8,11 +8,13 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Set;
 import java.util.function.Function;
 
 import static java.lang.String.format;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static ru.dimajokes.MessageUtils.testStringForKeywords;
 
 @Slf4j
@@ -20,39 +22,40 @@ import static ru.dimajokes.MessageUtils.testStringForKeywords;
 public class Bot extends TelegramLongPollingBot {
 
     private final JokesCache jokesCache;
-    private final String token;
+    private final BotConfig config;
 
-    private final String[] goodMsg = {"Да ладно, Димон опять пошутил! ", "Новая шутейка от Дмитрия. ", "Остановите его! Снова юмор! "};
-    private final String[] badMsg = {"Димон, теряешь хватку. ", "Как то не очень, сорри. ", "Очень плохо Дмитрий. "};
+    private final String[] goodMsg = {"Да ладно, %s опять пошутил! ", "Остановите его! Снова юмор! "};
+    private final String[] badMsg = {"%s, теряешь хватку. ", "Как то не очень, сорри. ", "Очень плохо %s... "};
     private final String[] goodSuffix = {"И это уже ", "", "Счетчик улетает в космос! "};
     private final String[] badSuffix = {"Давай, соберись. ", "Попробуй еще раз, что-ли... "};
-    private final String goodEnd = " раз за день!";
+    private final String goodEnd = " раз за день! ";
+    private final String motivation = "Еще чуть-чуть, и ты выйдешь в плюс!";
     private final Function<Long, String> badEnd = l -> format("Счетчик опустился до %d =\\", l);
-    private Long chatId;
+    private Set<Long> chatIds;
 
     @Override
     public void onUpdateReceived(Update update) {
         try {
             if (update.hasMessage()) {
                 Message message = update.getMessage();
-                if (chatId == null) {
-                    chatId = jokesCache.getChatId();
+                if (chatIds == null) {
+                    chatIds = config.getJokers().keySet();
                 }
                 Optional.ofNullable(message.getReplyToMessage())
-                        .filter(m -> m.getFrom().getId().longValue() == chatId)
-                        .ifPresent(m -> {
-                            String text = message.getText();
-                            MessageUtils.JokeType jokeType = testStringForKeywords(text);
-                            log.info("joke type of {} is {}", text, jokeType);
+                        .filter(m -> chatIds.contains(m.getFrom().getId().longValue()))
+                        .ifPresent(reply -> {
+                            MessageUtils.JokeType jokeType = testStringForKeywords(message.getText());
+                            log.info("joke type of {} is {}", message.getText(), jokeType);
+                            Long chatId = reply.getChatId();
                             switch (jokeType) {
                                 case GOOD:
-                                    if (jokesCache.save(m.getMessageId(), m.getText(), true)) {
-                                        sendMsg(getText(true), message.getChatId());
+                                    if (jokesCache.save(chatId, reply.getMessageId(), reply.getText(), true)) {
+                                        sendMsg(getText(chatId, true), message.getChatId());
                                     }
                                     break;
                                 case BAD:
-                                    if (jokesCache.save(m.getMessageId(), m.getText(), false)) {
-                                        sendMsg(getText(false), message.getChatId());
+                                    if (jokesCache.save(chatId, reply.getMessageId(), reply.getText(), false)) {
+                                        sendMsg(getText(chatId, false), message.getChatId());
                                     }
                                     break;
                                 case UNKNOWN:
@@ -77,18 +80,23 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private String getText(boolean good) {
+    private String getText(Long chatId, boolean good) {
         String msg;
         String suf;
         String end;
+        long count = jokesCache.getCount(chatId, good);
+        List<String> names = config.getJokers().get(chatId).getNames();
         if (good) {
-            msg = goodMsg[ThreadLocalRandom.current().nextInt(goodMsg.length)];
-            suf = goodSuffix[ThreadLocalRandom.current().nextInt(goodSuffix.length)];
-            end = jokesCache.getCount(good) + goodEnd;
+            msg = format(goodMsg[current().nextInt(goodMsg.length)], names.get(current().nextInt(names.size())));
+            suf = goodSuffix[current().nextInt(goodSuffix.length)];
+            end = count + goodEnd;
+            if (count < 0) {
+                end += motivation;
+            }
         } else {
-            msg = badMsg[ThreadLocalRandom.current().nextInt(badMsg.length)];
-            suf = badSuffix[ThreadLocalRandom.current().nextInt(badSuffix.length)];
-            end = badEnd.apply(jokesCache.getCount(good));
+            msg = format(badMsg[current().nextInt(badMsg.length)], names.get(current().nextInt(names.size())));
+            suf = badSuffix[current().nextInt(badSuffix.length)];
+            end = badEnd.apply(count);
         }
         return msg + suf + end;
     }
@@ -100,7 +108,7 @@ public class Bot extends TelegramLongPollingBot {
 
     @Override
     public String getBotToken() {
-        return token;
+        return config.getBotToken();
     }
 
 }

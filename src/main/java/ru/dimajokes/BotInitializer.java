@@ -1,7 +1,6 @@
 package ru.dimajokes;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextStoppedEvent;
 import org.springframework.stereotype.Component;
@@ -20,12 +19,12 @@ import javax.annotation.PostConstruct;
 public class BotInitializer implements ApplicationListener<ContextStoppedEvent> {
 
     private final JokesCache jokesCache;
-    private final String token;
+    private final BotConfig config;
     private BotSession botSession;
 
-    public BotInitializer(JokesCache jokesCache, @Value("${telegram.bot-token}") String token) {
+    public BotInitializer(JokesCache jokesCache, BotConfig config) {
         this.jokesCache = jokesCache;
-        this.token = token;
+        this.config = config;
     }
 
     @PostConstruct
@@ -33,7 +32,7 @@ public class BotInitializer implements ApplicationListener<ContextStoppedEvent> 
         ApiContextInitializer.init();
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
         try {
-            Bot bot = new Bot(jokesCache, token);
+            Bot bot = new Bot(jokesCache, config);
             botSession = telegramBotsApi.registerBot(bot);
         } catch (TelegramApiRequestException e) {
             log.error("Error on init telegram bot", e);

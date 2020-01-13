@@ -23,10 +23,7 @@ import redis.embedded.RedisServer;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -56,14 +53,13 @@ public class BotTest {
         configuration.setPort(6379);
         template = new RedisSpringConfiguration(null).redisTemplate(new JedisConnectionFactory(configuration));
         cache = new JokesCache(template);
-        cache.saveChatId(1);
-        bot = new Bot(cache, null);
+        bot = new Bot(cache, prepareConfig());
     }
 
     @Test
     @SneakyThrows
     public void testPositive() {
-        template.opsForValue().set(cache.getKey(), 0);
+        template.opsForValue().set(cache.getKey(0L), 0);
         Bot spy = prepareBot();
         Message message = prepareMessage();
         Update update = prepareUpdate(message);
@@ -77,7 +73,7 @@ public class BotTest {
             spy.onUpdateReceived(update);
         });
         verify(spy, times(8)).execute(isA(SendMessage.class));
-        assertEquals(6, template.opsForValue().get(cache.getKey()));
+        assertEquals(6, template.opsForValue().get(cache.getKey(0L)));
         Map<String, Integer> map = getJokeTypesMap(messageIds);
         assertSame(7, map.get(Boolean.TRUE.toString()));
         assertSame(1, map.get(Boolean.FALSE.toString()));
@@ -86,7 +82,7 @@ public class BotTest {
     @Test
     @SneakyThrows
     public void testNegative() {
-        template.opsForValue().set(cache.getKey(), 0);
+        template.opsForValue().set(cache.getKey(0L), 0);
         Bot spy = prepareBot();
         Message message = prepareMessage();
         Update update = prepareUpdate(message);
@@ -100,13 +96,13 @@ public class BotTest {
             spy.onUpdateReceived(update);
         });
         verify(spy, times(7)).execute(isA(SendMessage.class));
-        assertEquals(-7, template.opsForValue().get(cache.getKey()));
+        assertEquals(-7, template.opsForValue().get(cache.getKey(0L)));
         Map<String, Integer> jokeTypesMap = getJokeTypesMap(messageIds);
         assertSame(7, jokeTypesMap.get(Boolean.FALSE.toString()));
     }
 
     private Map<String, Integer> getJokeTypesMap(Set<Integer> messageIds) {
-        List<String> list = template.opsForHash().multiGet("jokesTypes." + DateTimeFormatter.ofPattern("dd.MM.yyyy").format(LocalDate.now()), messageIds.stream().map(Object::toString).collect(Collectors.toList()));
+        List<String> list = template.opsForHash().multiGet("jokesTypes.0." + DateTimeFormatter.ofPattern("dd.MM.yyyy").format(LocalDate.now()), messageIds.stream().map(Object::toString).collect(Collectors.toList()));
         return list.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.groupingBy(s -> s))
@@ -122,8 +118,19 @@ public class BotTest {
         User user = mock(User.class);
         when(message.getFrom()).thenReturn(user);
         when(message.getMessageId()).thenReturn(ThreadLocalRandom.current().nextInt(1000));
-        when(user.getId()).thenReturn(1);
+        when(message.getChatId()).thenReturn(0L);
+        when(user.getId()).thenReturn(0);
         return message;
+    }
+
+    private static BotConfig prepareConfig() {
+        BotConfig config = new BotConfig();
+        HashMap<Long, BotConfig.ConfigEntry> map = new HashMap<>();
+        config.setJokers(map);
+        BotConfig.ConfigEntry entry = new BotConfig.ConfigEntry();
+        entry.setNames(Arrays.asList("kek"));
+        map.put(0L, entry);
+        return config;
     }
 
     private Update prepareUpdate(Message message) {
