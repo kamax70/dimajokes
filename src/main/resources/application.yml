@@ -1,0 +1,15 @@
+spring:
+  profiles:
+    active: localdev
+telegram:
+  bot-token: ${BOT_TOKEN}
+  jokers:
+    70098504:
+      names:
+        - Егор
+        - Егорыч
+    305165616:
+      names:
+        - Дима
+        - Дмитрий
+        - Димон
