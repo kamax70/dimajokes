@@ -46,7 +46,7 @@ public class Bot extends TelegramLongPollingBot {
                         .ifPresent(reply -> {
                             MessageUtils.JokeType jokeType = testStringForKeywords(message.getText());
                             log.info("joke type of {} is {}", message.getText(), jokeType);
-                            Long chatId = reply.getChatId();
+                            Long chatId = reply.getFrom().getId().longValue();
                             switch (jokeType) {
                                 case GOOD:
                                     if (jokesCache.save(chatId, reply.getMessageId(), reply.getText(), true)) {
