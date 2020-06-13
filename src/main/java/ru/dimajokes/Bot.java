@@ -31,7 +31,7 @@ public class Bot extends TelegramLongPollingBot {
     private final String goodEnd = " раз за день! ";
     private final String motivation = "Еще чуть-чуть, и ты выйдешь в плюс!";
     private final Function<Long, String> badEnd = l -> format("Счетчик опустился до %d =\\", l);
-    private final String voiceMessagePattern = "Пошел нахуй @%s.";
+    private final String voiceMessageReply = "Пошел нахуй.";
     private Set<Long> chatIds;
 
     @Override
@@ -41,7 +41,7 @@ public class Bot extends TelegramLongPollingBot {
                 Message message = update.getMessage();
 
                 if (message.hasVoice()) {
-                    sendMsg(String.format(voiceMessagePattern, message.getFrom().getUserName()), message.getChatId());
+                    sendMsg(voiceMessageReply, message.getChatId(), message);
                     return;
                 }
 
@@ -80,6 +80,18 @@ public class Bot extends TelegramLongPollingBot {
         log.info("send message {}", s);
         SendMessage sendMessage = new SendMessage(chatId, s)
                 .enableMarkdown(true);
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            log.error("Exception: ", e);
+        }
+    }
+
+    private void sendMsg(String s, Long chatId, Message replyMsg) {
+        log.info("send message {}", s);
+        SendMessage sendMessage = new SendMessage(chatId, s)
+                .enableMarkdown(true);
+        sendMessage.setReplyToMessageId(replyMsg.getMessageId());
         try {
             execute(sendMessage);
         } catch (TelegramApiException e) {
