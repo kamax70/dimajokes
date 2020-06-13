@@ -31,6 +31,7 @@ public class Bot extends TelegramLongPollingBot {
     private final String goodEnd = " раз за день! ";
     private final String motivation = "Еще чуть-чуть, и ты выйдешь в плюс!";
     private final Function<Long, String> badEnd = l -> format("Счетчик опустился до %d =\\", l);
+    private final String voiceMessagePattern = "Пошел нахуй @%s.";
     private Set<Long> chatIds;
 
     @Override
@@ -38,6 +39,12 @@ public class Bot extends TelegramLongPollingBot {
         try {
             if (update.hasMessage()) {
                 Message message = update.getMessage();
+
+                if (message.hasVoice()) {
+                    sendMsg(String.format(voiceMessagePattern, message.getFrom().getUserName()), message.getChatId());
+                    return;
+                }
+
                 if (chatIds == null) {
                     chatIds = config.getJokers().keySet();
                 }
