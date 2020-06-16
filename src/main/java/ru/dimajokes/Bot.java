@@ -100,19 +100,6 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private void sendMsg(String s, Long chatId, Message replyMsg) {
-        log.info("send message {}", s);
-        SendMessage sendMessage = new SendMessage(chatId, s)
-                .enableMarkdown(true);
-        sendMessage.setReplyToMessageId(replyMsg.getMessageId());
-        try {
-            execute(sendMessage);
-        } catch (TelegramApiException e) {
-            log.error("Exception: ", e);
-        }
-    }
-
-
     private String getText(Long chatId, boolean good) {
         String msg;
         String suf;
