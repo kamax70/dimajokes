@@ -125,6 +125,31 @@ public class BotTest {
         verify(spy, times(2)).execute(isA(SendMessage.class));
     }
 
+
+    @Test
+    @SneakyThrows
+    public void testVideo() {
+        template.opsForValue().set(cache.getKey(0L), 0);
+        Bot spy = prepareBot();
+        Message message = prepareMessage();
+        Update update = prepareUpdate(message);
+        Set<Integer> messageIds = newHashSet();
+        asList("тут текст", "", "еще какойто текст", "", "теекст", "", "привет", "здраствуйте").forEach(s -> {
+            log.info("trying {}", s);
+
+            when(message.getText()).thenReturn(s);
+
+            int messageId = ThreadLocalRandom.current().nextInt(100_000);
+            messageIds.add(messageId);
+            when(message.getMessageId()).thenReturn(messageId);
+            when(message.getFrom().getUserName()).thenReturn(String.valueOf(messageId));
+            when(message.hasVideo()).thenReturn(s.isEmpty());
+            spy.onUpdateReceived(update);
+        });
+        verify(spy, times(3)).execute(isA(SendMessage.class));
+    }
+
+
     private Map<String, Integer> getJokeTypesMap(Set<Integer> messageIds) {
         List<String> list = template.opsForHash().multiGet("jokesTypes.0." + DateTimeFormatter.ofPattern("dd.MM.yyyy").format(LocalDate.now()), messageIds.stream().map(Object::toString).collect(Collectors.toList()));
         return list.stream()

@@ -40,7 +40,8 @@ public class Bot extends TelegramLongPollingBot {
             if (update.hasMessage()) {
                 Message message = update.getMessage();
 
-                if (message.hasVoice()) {
+
+                if (message.hasVoice() || message.hasVideoNote()) {
                     sendMsg(voiceMessageReply, message.getChatId(), message);
                     return;
                 }
@@ -98,6 +99,19 @@ public class Bot extends TelegramLongPollingBot {
             log.error("Exception: ", e);
         }
     }
+
+    private void sendMsg(String s, Long chatId, Message replyMsg) {
+        log.info("send message {}", s);
+        SendMessage sendMessage = new SendMessage(chatId, s)
+                .enableMarkdown(true);
+        sendMessage.setReplyToMessageId(replyMsg.getMessageId());
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            log.error("Exception: ", e);
+        }
+    }
+
 
     private String getText(Long chatId, boolean good) {
         String msg;
