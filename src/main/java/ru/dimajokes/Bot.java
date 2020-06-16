@@ -40,6 +40,7 @@ public class Bot extends TelegramLongPollingBot {
             if (update.hasMessage()) {
                 Message message = update.getMessage();
 
+
                 if (message.hasVoice() || message.hasVideoNote()) {
                     sendMsg(voiceMessageReply, message.getChatId(), message);
                     return;
@@ -110,6 +111,7 @@ public class Bot extends TelegramLongPollingBot {
             log.error("Exception: ", e);
         }
     }
+
 
     private String getText(Long chatId, boolean good) {
         String msg;

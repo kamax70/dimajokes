@@ -125,6 +125,7 @@ public class BotTest {
         verify(spy, times(2)).execute(isA(SendMessage.class));
     }
 
+
     @Test
     @SneakyThrows
     public void testVideo() {
@@ -147,6 +148,7 @@ public class BotTest {
         });
         verify(spy, times(3)).execute(isA(SendMessage.class));
     }
+
 
     private Map<String, Integer> getJokeTypesMap(Set<Integer> messageIds) {
         List<String> list = template.opsForHash().multiGet("jokesTypes.0." + DateTimeFormatter.ofPattern("dd.MM.yyyy").format(LocalDate.now()), messageIds.stream().map(Object::toString).collect(Collectors.toList()));
