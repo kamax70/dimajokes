@@ -143,10 +143,34 @@ public class BotTest {
             messageIds.add(messageId);
             when(message.getMessageId()).thenReturn(messageId);
             when(message.getFrom().getUserName()).thenReturn(String.valueOf(messageId));
-            when(message.hasVideo()).thenReturn(s.isEmpty());
+            when(message.hasVideoNote()).thenReturn(s.isEmpty());
             spy.onUpdateReceived(update);
         });
         verify(spy, times(3)).execute(isA(SendMessage.class));
+    }
+
+    @Test
+    @SneakyThrows
+    public void testUkrainianSupport() {
+        template.opsForValue().set(cache.getKey(0L), 0);
+        Bot spy = prepareBot();
+        Message message = prepareMessage();
+        Update update = prepareUpdate(message);
+        Set<Integer> messageIds = newHashSet();
+
+        asList("Слава УкРаИне и героям", "дуд лох", "еще какойто текст", "шо", "слава УКРАИНЕ", " ", "украине слава", "слава Украине!").forEach(s -> {
+            log.info("trying {}", s);
+
+            when(message.getText()).thenReturn(s);
+
+            int messageId = ThreadLocalRandom.current().nextInt(100_000);
+            messageIds.add(messageId);
+            when(message.getMessageId()).thenReturn(messageId);
+            when(message.getFrom().getUserName()).thenReturn(String.valueOf(messageId));
+            when(message.hasVideo()).thenReturn(s.isEmpty());
+            spy.onUpdateReceived(update);
+        });
+        verify(spy, times(4)).execute(isA(SendMessage.class));
     }
 
 

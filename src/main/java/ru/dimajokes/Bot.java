@@ -1,5 +1,6 @@
 package ru.dimajokes;
 
+import com.google.inject.internal.cglib.core.$ClassNameReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -32,6 +33,9 @@ public class Bot extends TelegramLongPollingBot {
     private final String motivation = "Еще чуть-чуть, и ты выйдешь в плюс!";
     private final Function<Long, String> badEnd = l -> format("Счетчик опустился до %d =\\", l);
     private final String voiceMessageReply = "Пошел нахуй.";
+    private final String ukrainianPhrase = "слава украине";
+    private final String revertedUkrainianPhrase = "украине слава";
+    private final String ukrainianReplyPhrase = "Героям слава!";
     private Set<Long> chatIds;
 
     @Override
@@ -39,7 +43,13 @@ public class Bot extends TelegramLongPollingBot {
         try {
             if (update.hasMessage()) {
                 Message message = update.getMessage();
+                final String messageText = message.getText();
 
+                if (messageText.toLowerCase().contains(ukrainianPhrase) ||
+                        messageText.toLowerCase().contains(revertedUkrainianPhrase)) {
+                    sendMsg(ukrainianReplyPhrase, message.getChatId(), message);
+                    return;
+                }
 
                 if (message.hasVoice() || message.hasVideoNote()) {
                     sendMsg(voiceMessageReply, message.getChatId(), message);
@@ -99,19 +109,6 @@ public class Bot extends TelegramLongPollingBot {
             log.error("Exception: ", e);
         }
     }
-
-    private void sendMsg(String s, Long chatId, Message replyMsg) {
-        log.info("send message {}", s);
-        SendMessage sendMessage = new SendMessage(chatId, s)
-                .enableMarkdown(true);
-        sendMessage.setReplyToMessageId(replyMsg.getMessageId());
-        try {
-            execute(sendMessage);
-        } catch (TelegramApiException e) {
-            log.error("Exception: ", e);
-        }
-    }
-
 
     private String getText(Long chatId, boolean good) {
         String msg;
