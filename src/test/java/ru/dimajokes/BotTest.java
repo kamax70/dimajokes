@@ -110,19 +110,15 @@ public class BotTest {
         Message message = prepareMessage();
         Update update = prepareUpdate(message);
         Set<Integer> messageIds = newHashSet();
-        asList("тут текст", "", "еще какойто текст", "", "теекст", "аниме", "привет", "здраствуйте").forEach(s -> {
-            log.info("trying {}", s);
+        log.info("trying {}", "");
 
-            when(message.getText()).thenReturn(s);
-
-            int messageId = ThreadLocalRandom.current().nextInt(100_000);
-            messageIds.add(messageId);
-            when(message.getMessageId()).thenReturn(messageId);
-            when(message.getFrom().getUserName()).thenReturn(String.valueOf(messageId));
-            when(message.hasVoice()).thenReturn(s.isEmpty());
-            spy.onUpdateReceived(update);
-        });
-        verify(spy, times(2)).execute(isA(SendMessage.class));
+        int messageId = ThreadLocalRandom.current().nextInt(100_000);
+        messageIds.add(messageId);
+        when(message.getMessageId()).thenReturn(messageId);
+        when(message.getFrom().getUserName()).thenReturn(String.valueOf(messageId));
+        when(message.hasVoice()).thenReturn(true);
+        spy.onUpdateReceived(update);
+        verify(spy, times(1)).execute(isA(SendMessage.class));
     }
 
 
@@ -166,6 +162,7 @@ public class BotTest {
             int messageId = ThreadLocalRandom.current().nextInt(100_000);
             messageIds.add(messageId);
             when(message.getMessageId()).thenReturn(messageId);
+            when(message.hasText()).thenReturn(true);
             when(message.getFrom().getUserName()).thenReturn(String.valueOf(messageId));
             when(message.hasVideo()).thenReturn(s.isEmpty());
             spy.onUpdateReceived(update);

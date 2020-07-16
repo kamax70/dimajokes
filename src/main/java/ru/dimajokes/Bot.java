@@ -45,8 +45,8 @@ public class Bot extends TelegramLongPollingBot {
                 Message message = update.getMessage();
                 final String messageText = message.getText();
 
-                if (messageText.toLowerCase().contains(ukrainianPhrase) ||
-                        messageText.toLowerCase().contains(revertedUkrainianPhrase)) {
+                if (message.hasText() && (messageText.toLowerCase().contains(ukrainianPhrase) ||
+                        messageText.toLowerCase().contains(revertedUkrainianPhrase))) {
                     sendMsg(ukrainianReplyPhrase, message.getChatId(), message);
                     return;
                 }
