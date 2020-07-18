@@ -36,6 +36,12 @@ public class Bot extends TelegramLongPollingBot {
     private final String ukrainianPhrase = "слава украине";
     private final String revertedUkrainianPhrase = "украине слава";
     private final String ukrainianReplyPhrase = "Героям слава!";
+    private final String[] sadWords = {
+            "грустно" , "печально", "трагично",
+            "плохо", "мрачно", "жалко",
+            "уныло", "тоскливо", "плачевно",
+            "грустненько", "хуево"};
+    private final String sadReplay = "%s тебе же, это как я пытался понять джаву, выглядело %s, ни одна сука не помогла";
     private Set<Long> chatIds;
 
     @Override
@@ -54,6 +60,13 @@ public class Bot extends TelegramLongPollingBot {
                 if (message.hasVoice() || message.hasVideoNote()) {
                     sendMsg(voiceMessageReply, message.getChatId(), message);
                     return;
+                }
+
+                for (String sadWord : sadWords) {
+                    if (message.hasText() && messageText.toLowerCase().contains(sadWord)) {
+                        sendMsg(format(sadReplay, sadWord, sadWord), message.getChatId(), message);
+                        return;
+                    }
                 }
 
                 if (chatIds == null) {
