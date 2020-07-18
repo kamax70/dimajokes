@@ -173,6 +173,49 @@ public class BotTest {
         verify(spy, times(4)).execute(isA(SendMessage.class));
     }
 
+    @Test
+    @SneakyThrows
+    public void testSadSupport(){
+        Bot spy = prepareBot();
+        Message message = prepareMessage();
+        Update update = prepareUpdate(message);
+
+        asList(
+                "грустненько",
+                "грусненько",
+                "это было грустненько",
+                "",
+                "слава украине это грустненько",
+                "грустненько, но все же слава украине",
+                "грустненькоаыавыа",
+                "енькогрустн",
+                "грустн_енько",
+                "ГРУСТНЕНЬКО БЛЯДЬ"
+        ).forEach(s -> {
+            log.info("trying {}", s);
+
+            when(message.getText()).thenReturn(s);
+
+            int messageId = ThreadLocalRandom.current().nextInt(100_000);
+            when(message.getMessageId()).thenReturn(messageId);
+            when(message.getFrom().getUserName()).thenReturn(String.valueOf(messageId));
+            when(message.hasVideo()).thenReturn(s.isEmpty());
+            spy.onUpdateReceived(update);
+        });
+        String matchString = "грустненько тебе же, это как я пытался понять джаву, выглядело грустненько, ни одна сука не помогла";
+        verify(spy, times(4))
+                .execute(argThat(new SendMessageMatcher(new SendMessage(1L, matchString))));
+    }
+
+    @AllArgsConstructor
+    private class SendMessageMatcher implements ArgumentMatcher<SendMessage> {
+        private SendMessage left;
+        @Override
+        public boolean matches(SendMessage right) {
+            return left.getText().equals(right.getText());
+        }
+    }
+
 
     private Map<String, Integer> getJokeTypesMap(Set<Integer> messageIds) {
         List<String> list = template.opsForHash().multiGet("jokesTypes.0." + DateTimeFormatter.ofPattern("dd.MM.yyyy").format(LocalDate.now()), messageIds.stream().map(Object::toString).collect(Collectors.toList()));
