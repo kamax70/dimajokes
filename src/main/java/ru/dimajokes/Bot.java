@@ -58,9 +58,15 @@ public class Bot extends TelegramLongPollingBot {
 
                 if (messageText.toLowerCase().contains(ukrainianPhrase) ||
                         messageText.toLowerCase().contains(revertedUkrainianPhrase)) {
-                    sendMsg(ukrainianReplyPhrase, message.getChatId(), message);
-                    return;
+
+                    if (message.hasText() && (messageText.toLowerCase().contains(ukrainianPhrase) ||
+                            messageText.toLowerCase().contains(revertedUkrainianPhrase))) {
+
+                        sendMsg(ukrainianReplyPhrase, message.getChatId(), message);
+                        return;
+                    }
                 }
+
 
                 for (String sadWord : sadWords) {
                     if (messageText.toLowerCase().contains(sadWord)) {
