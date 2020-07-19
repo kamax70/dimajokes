@@ -41,7 +41,7 @@ public class Bot extends TelegramLongPollingBot {
             "плохо", "мрачно", "жалко",
             "уныло", "тоскливо", "плачевно",
             "грустненько", "хуево"};
-    private final String sadReplay = "%s тебе же, это как я пытался понять джаву, выглядело %s, ни одна сука не помогла";
+    private final String sadReplay = "%s? Никогда не поздно покончить с собой!";
     private Set<Long> chatIds;
 
     @Override
