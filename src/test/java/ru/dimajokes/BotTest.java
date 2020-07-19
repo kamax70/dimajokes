@@ -199,7 +199,7 @@ public class BotTest {
             when(message.hasVideo()).thenReturn(s.isEmpty());
             spy.onUpdateReceived(update);
         });
-        String matchString = "грустненько тебе же, это как я пытался понять джаву, выглядело грустненько, ни одна сука не помогла";
+        String matchString = "Грустненько? Никогда не поздно покончить с собой!";
         verify(spy, times(4))
                 .execute(argThat(new SendMessageMatcher(new SendMessage(1L, matchString))));
     }
