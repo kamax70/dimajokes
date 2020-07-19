@@ -36,6 +36,12 @@ public class Bot extends TelegramLongPollingBot {
     private final String ukrainianPhrase = "слава украине";
     private final String revertedUkrainianPhrase = "украине слава";
     private final String ukrainianReplyPhrase = "Героям слава!";
+    private final String[] sadWords = {
+            "грустно" , "печально", "трагично",
+            "плохо", "мрачно", "жалко",
+            "уныло", "тоскливо", "плачевно",
+            "грустненько", "хуево"};
+    private final String sadReplay = "%s? Никогда не поздно покончить с собой!";
     private Set<Long> chatIds;
 
     @Override
@@ -43,17 +49,27 @@ public class Bot extends TelegramLongPollingBot {
         try {
             if (update.hasMessage()) {
                 Message message = update.getMessage();
-                final String messageText = message.getText();
+                final String messageText = message.getText().toLowerCase();
 
-                if (message.hasText() && (messageText.toLowerCase().contains(ukrainianPhrase) ||
-                        messageText.toLowerCase().contains(revertedUkrainianPhrase))) {
+                if (message.hasText() && (messageText.contains(ukrainianPhrase) ||
+                        messageText.contains(revertedUkrainianPhrase))) {
                     sendMsg(ukrainianReplyPhrase, message.getChatId(), message);
                     return;
                 }
 
+
                 if (message.hasVoice() || message.hasVideoNote()) {
                     sendMsg(voiceMessageReply, message.getChatId(), message);
                     return;
+                }
+
+                if (message.hasText()) {
+                    Optional<String> optional = sadWordList.stream()
+                            .filter(messageText::contains).findFirst();
+                    if (optional.isPresent()) {
+                        sendMsg(format(sadReplay, StringUtils.capitalize(optional.get())), message.getChatId(), message);
+                        return;
+                    }
                 }
 
                 if (chatIds == null) {
