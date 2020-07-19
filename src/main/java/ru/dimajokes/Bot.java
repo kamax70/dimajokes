@@ -57,14 +57,17 @@ public class Bot extends TelegramLongPollingBot {
                     return;
                 }
 
+
                 if (message.hasVoice() || message.hasVideoNote()) {
                     sendMsg(voiceMessageReply, message.getChatId(), message);
                     return;
                 }
 
-                for (String sadWord : sadWords) {
-                    if (message.hasText() && messageText.toLowerCase().contains(sadWord)) {
-                        sendMsg(format(sadReplay, sadWord, sadWord), message.getChatId(), message);
+                if (message.hasText()) {
+                    Optional<String> optional = sadWordList.stream()
+                            .filter(messageText::contains).findFirst();
+                    if (optional.isPresent()) {
+                        sendMsg(format(sadReplay, StringUtils.capitalize(optional.get())), message.getChatId(), message);
                         return;
                     }
                 }
