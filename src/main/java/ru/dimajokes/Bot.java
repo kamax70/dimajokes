@@ -1,6 +1,5 @@
 package ru.dimajokes;
 
-import com.google.inject.internal.cglib.core.$ClassNameReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -11,6 +10,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -25,17 +25,26 @@ public class Bot extends TelegramLongPollingBot {
     private final JokesCache jokesCache;
     private final BotConfig config;
 
-    private final String[] goodMsg = {"Да ладно, %s опять пошутил! ", "Остановите его! Снова юмор! "};
-    private final String[] badMsg = {"%s, теряешь хватку. ", "Как то не очень, сорри. ", "Очень плохо %s... "};
-    private final String[] goodSuffix = {"И это уже ", "", "Счетчик улетает в космос! "};
-    private final String[] badSuffix = {"Давай, соберись. ", "Попробуй еще раз, что-ли... "};
+    private final String[] goodMsg = { "Да ладно, %s опять пошутил! ",
+            "Остановите его! Снова юмор! " };
+    private final String[] badMsg = { "%s, теряешь хватку. ",
+            "Как то не очень, сорри. ", "Очень плохо %s... " };
+    private final String[] goodSuffix = { "И это уже ", "",
+            "Счетчик улетает в космос! " };
+    private final String[] badSuffix = { "Давай, соберись. ",
+            "Попробуй еще раз, что-ли... " };
     private final String goodEnd = " раз за день! ";
     private final String motivation = "Еще чуть-чуть, и ты выйдешь в плюс!";
-    private final Function<Long, String> badEnd = l -> format("Счетчик опустился до %d =\\", l);
+    private final Function<Long, String> badEnd = l -> format(
+            "Счетчик опустился до %d =\\", l);
     private final String voiceMessageReply = "Пошел нахуй.";
     private final String ukrainianPhrase = "слава украине";
     private final String revertedUkrainianPhrase = "украине слава";
     private final String ukrainianReplyPhrase = "Героям слава!";
+    private final String[] belarusPhrases = { "беларуссия", "беларусии",
+            "беларусия", "белорусия", "белоруссия", "беларуссией" };
+    private final String[] belarusReplyPhrases = { "Беларусь!",
+            "Беларусь, блядь!", "Беларусь, сука!" };
     private Set<Long> chatIds;
 
     @Override
@@ -45,8 +54,10 @@ public class Bot extends TelegramLongPollingBot {
                 Message message = update.getMessage();
                 final String messageText = message.getText();
 
-                if (message.hasText() && (messageText.toLowerCase().contains(ukrainianPhrase) ||
-                        messageText.toLowerCase().contains(revertedUkrainianPhrase))) {
+                if (message.hasText() && (
+                        messageText.toLowerCase().contains(ukrainianPhrase)
+                                || messageText.toLowerCase()
+                                .contains(revertedUkrainianPhrase))) {
                     sendMsg(ukrainianReplyPhrase, message.getChatId(), message);
                     return;
                 }
@@ -56,29 +67,49 @@ public class Bot extends TelegramLongPollingBot {
                     return;
                 }
 
+                if (message.hasText()) {
+                    for (String phrase : belarusPhrases) {
+                        if (messageText.contains(phrase)) {
+                            sendMsg(belarusReplyPhrases[new Random()
+                                            .nextInt(belarusReplyPhrases.length)],
+                                    message.getChatId(), message);
+                            return;
+                        }
+                    }
+                }
+
                 if (chatIds == null) {
                     chatIds = config.getJokers().keySet();
                 }
                 Optional.ofNullable(message.getReplyToMessage())
-                        .filter(m -> chatIds.contains(m.getFrom().getId().longValue()))
+                        .filter(m -> chatIds
+                                .contains(m.getFrom().getId().longValue()))
                         .ifPresent(reply -> {
-                            MessageUtils.JokeType jokeType = testStringForKeywords(message.getText());
-                            log.info("joke type of {} is {}", message.getText(), jokeType);
+                            MessageUtils.JokeType jokeType = testStringForKeywords(
+                                    message.getText());
+                            log.info("joke type of {} is {}", message.getText(),
+                                    jokeType);
                             Long chatId = reply.getFrom().getId().longValue();
                             switch (jokeType) {
-                                case GOOD:
-                                    if (jokesCache.save(chatId, reply.getMessageId(), reply.getText(), true)) {
-                                        sendMsg(getText(chatId, true), message.getChatId());
-                                    }
-                                    break;
-                                case BAD:
-                                    if (jokesCache.save(chatId, reply.getMessageId(), reply.getText(), false)) {
-                                        sendMsg(getText(chatId, false), message.getChatId());
-                                    }
-                                    break;
-                                case UNKNOWN:
-                                default:
-                                    break;
+                            case GOOD:
+                                if (jokesCache
+                                        .save(chatId, reply.getMessageId(),
+                                                reply.getText(), true)) {
+                                    sendMsg(getText(chatId, true),
+                                            message.getChatId());
+                                }
+                                break;
+                            case BAD:
+                                if (jokesCache
+                                        .save(chatId, reply.getMessageId(),
+                                                reply.getText(), false)) {
+                                    sendMsg(getText(chatId, false),
+                                            message.getChatId());
+                                }
+                                break;
+                            case UNKNOWN:
+                            default:
+                                break;
                             }
                         });
             }
@@ -117,14 +148,16 @@ public class Bot extends TelegramLongPollingBot {
         long count = jokesCache.getCount(chatId, good);
         List<String> names = config.getJokers().get(chatId).getNames();
         if (good) {
-            msg = format(goodMsg[current().nextInt(goodMsg.length)], names.get(current().nextInt(names.size())));
+            msg = format(goodMsg[current().nextInt(goodMsg.length)],
+                    names.get(current().nextInt(names.size())));
             suf = goodSuffix[current().nextInt(goodSuffix.length)];
             end = count + goodEnd;
             if (count < 0) {
                 end += motivation;
             }
         } else {
-            msg = format(badMsg[current().nextInt(badMsg.length)], names.get(current().nextInt(names.size())));
+            msg = format(badMsg[current().nextInt(badMsg.length)],
+                    names.get(current().nextInt(names.size())));
             suf = badSuffix[current().nextInt(badSuffix.length)];
             end = badEnd.apply(count);
         }
