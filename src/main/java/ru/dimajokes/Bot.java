@@ -1,6 +1,5 @@
 package ru.dimajokes;
 
-import com.google.inject.internal.cglib.core.$ClassNameReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -36,6 +35,8 @@ public class Bot extends TelegramLongPollingBot {
     private final String ukrainianPhrase = "слава украине";
     private final String revertedUkrainianPhrase = "украине слава";
     private final String ukrainianReplyPhrase = "Героям слава!";
+    private final String[] belarusPhrases = {"беларуссия", "беларусии", "беларусия", "белорусия", "белоруссия", "беларуссией"};
+    private final String belarusReplyPhrase = "Беларусь!";
     private Set<Long> chatIds;
 
     @Override
@@ -54,6 +55,15 @@ public class Bot extends TelegramLongPollingBot {
                 if (message.hasVoice() || message.hasVideoNote()) {
                     sendMsg(voiceMessageReply, message.getChatId(), message);
                     return;
+                }
+
+                if (message.hasText()) {
+                    for (String phrase: belarusPhrases) {
+                        if (messageText.contains(phrase)) {
+                            sendMsg(belarusReplyPhrase, message.getChatId(), message);
+                            return;
+                        }
+                    }
                 }
 
                 if (chatIds == null) {

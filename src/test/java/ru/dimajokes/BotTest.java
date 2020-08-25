@@ -170,6 +170,25 @@ public class BotTest {
         verify(spy, times(4)).execute(isA(SendMessage.class));
     }
 
+    @Test
+    @SneakyThrows
+    public void testBelarusSupport() {
+        Bot spy = prepareBot();
+        Message message = prepareMessage();
+        Update update = prepareUpdate(message);
+
+        asList("беларуссия", "беларусии", "еще какойто текст", "беларусия", "беларусь", " ", "беларуссия", "белоруссия").forEach(s -> {
+            log.info("trying {}", s);
+
+            when(message.getText()).thenReturn(s);
+
+            when(message.hasText()).thenReturn(true);
+            when(message.getText()).thenReturn(s);
+            spy.onUpdateReceived(update);
+        });
+        verify(spy, times(5)).execute(isA(SendMessage.class));
+    }
+
 
     private Map<String, Integer> getJokeTypesMap(Set<Integer> messageIds) {
         List<String> list = template.opsForHash().multiGet("jokesTypes.0." + DateTimeFormatter.ofPattern("dd.MM.yyyy").format(LocalDate.now()), messageIds.stream().map(Object::toString).collect(Collectors.toList()));
