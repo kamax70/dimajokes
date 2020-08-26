@@ -177,7 +177,7 @@ public class BotTest {
         Message message = prepareMessage();
         Update update = prepareUpdate(message);
 
-        asList("беларуссия", "беларусии", "еще какойто текст", "беларусия", "беларусь", " ", "беларуссия", "белоруссия").forEach(s -> {
+        asList("беларуссия", "белАрусии", "еще какойто текст", "беларусия", "беларусь", " ", "беларуссия", "белоруссия").forEach(s -> {
             log.info("trying {}", s);
 
             when(message.getText()).thenReturn(s);

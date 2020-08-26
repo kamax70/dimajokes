@@ -42,7 +42,7 @@ public class Bot extends TelegramLongPollingBot {
     private final String revertedUkrainianPhrase = "украине слава";
     private final String ukrainianReplyPhrase = "Героям слава!";
     private final String[] belarusPhrases = { "беларуссия", "беларусии",
-            "беларусия", "белорусия", "белоруссия", "беларуссией" };
+            "беларусия", "белорусия", "белоруссия", "беларуссией", "биларусия", "биларуссия", "биларусии" };
     private final String[] belarusReplyPhrases = { "Беларусь!",
             "Беларусь, блядь!", "Беларусь, сука!" };
     private Set<Long> chatIds;
@@ -69,7 +69,7 @@ public class Bot extends TelegramLongPollingBot {
 
                 if (message.hasText()) {
                     for (String phrase : belarusPhrases) {
-                        if (messageText.contains(phrase)) {
+                        if (messageText.toLowerCase().contains(phrase.toLowerCase())) {
                             sendMsg(belarusReplyPhrases[new Random()
                                             .nextInt(belarusReplyPhrases.length)],
                                     message.getChatId(), message);
