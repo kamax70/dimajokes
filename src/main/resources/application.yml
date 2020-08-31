@@ -8,6 +8,7 @@ telegram:
       names:
         - Егор
         - Егорыч
+      can-be-disliked: false
     305165616:
       names:
         - Дима

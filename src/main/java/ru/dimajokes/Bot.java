@@ -25,14 +25,14 @@ public class Bot extends TelegramLongPollingBot {
     private final JokesCache jokesCache;
     private final BotConfig config;
 
-    private final String[] goodMsg = { "Да ладно, %s опять пошутил! ",
-            "Остановите его! Снова юмор! " };
-    private final String[] badMsg = { "%s, теряешь хватку. ",
-            "Как то не очень, сорри. ", "Очень плохо %s... " };
-    private final String[] goodSuffix = { "И это уже ", "",
-            "Счетчик улетает в космос! " };
-    private final String[] badSuffix = { "Давай, соберись. ",
-            "Попробуй еще раз, что-ли... " };
+    private final String[] goodMsg = {"Да ладно, %s опять пошутил! ",
+            "Остановите его! Снова юмор! "};
+    private final String[] badMsg = {"%s, теряешь хватку. ",
+            "Как то не очень, сорри. ", "Очень плохо %s... "};
+    private final String[] goodSuffix = {"И это уже ", "",
+            "Счетчик улетает в космос! "};
+    private final String[] badSuffix = {"Давай, соберись. ",
+            "Попробуй еще раз, что-ли... "};
     private final String goodEnd = " раз за день! ";
     private final String motivation = "Еще чуть-чуть, и ты выйдешь в плюс!";
     private final Function<Long, String> badEnd = l -> format(
@@ -41,10 +41,10 @@ public class Bot extends TelegramLongPollingBot {
     private final String ukrainianPhrase = "слава украине";
     private final String revertedUkrainianPhrase = "украине слава";
     private final String ukrainianReplyPhrase = "Героям слава!";
-    private final String[] belarusPhrases = { "беларуссия", "беларусии",
-            "беларусия", "белорусия", "белоруссия", "беларуссией" };
-    private final String[] belarusReplyPhrases = { "Беларусь!",
-            "Беларусь, блядь!", "Беларусь, сука!" };
+    private final String[] belarusPhrases = {"беларуссия", "беларусии",
+            "беларусия", "белорусия", "белоруссия", "беларуссией"};
+    private final String[] belarusReplyPhrases = {"Беларусь!",
+            "Беларусь, блядь!", "Беларусь, сука!"};
     private Set<Long> chatIds;
 
     @Override
@@ -85,31 +85,30 @@ public class Bot extends TelegramLongPollingBot {
                         .filter(m -> chatIds
                                 .contains(m.getFrom().getId().longValue()))
                         .ifPresent(reply -> {
-                            MessageUtils.JokeType jokeType = testStringForKeywords(
-                                    message.getText());
-                            log.info("joke type of {} is {}", message.getText(),
-                                    jokeType);
+                            MessageUtils.JokeType jokeType = testStringForKeywords(message.getText());
+                            log.info("joke type of {} is {}", message.getText(), jokeType);
                             Long chatId = reply.getFrom().getId().longValue();
+                            BotConfig.ConfigEntry joker = config.getJokers().get(chatId);
                             switch (jokeType) {
-                            case GOOD:
-                                if (jokesCache
-                                        .save(chatId, reply.getMessageId(),
-                                                reply.getText(), true)) {
-                                    sendMsg(getText(chatId, true),
-                                            message.getChatId());
-                                }
-                                break;
-                            case BAD:
-                                if (jokesCache
-                                        .save(chatId, reply.getMessageId(),
-                                                reply.getText(), false)) {
-                                    sendMsg(getText(chatId, false),
-                                            message.getChatId());
-                                }
-                                break;
-                            case UNKNOWN:
-                            default:
-                                break;
+                                case GOOD:
+                                    if (jokesCache
+                                            .save(chatId, reply.getMessageId(),
+                                                    reply.getText(), true)) {
+                                        sendMsg(getText(chatId, true),
+                                                message.getChatId());
+                                    }
+                                    break;
+                                case BAD:
+                                    if (joker.getCanBeDisliked() && jokesCache.save(chatId, reply.getMessageId(), reply.getText(), false)) {
+                                        sendMsg(getText(chatId, false),
+                                                message.getChatId());
+                                    } else if (!joker.getCanBeDisliked()) {
+                                        sendMsg("Этот человек неприкасаемый, епта.", message.getChatId());
+                                    }
+                                    break;
+                                case UNKNOWN:
+                                default:
+                                    break;
                             }
                         });
             }
@@ -118,7 +117,9 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private void sendMsg(String s, Long chatId) {
+    private void sendMsg(String s,
+            Long chatId
+    ) {
         log.info("send message {}", s);
         SendMessage sendMessage = new SendMessage(chatId, s)
                 .enableMarkdown(true);
@@ -129,7 +130,10 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private void sendMsg(String s, Long chatId, Message replyMsg) {
+    private void sendMsg(String s,
+            Long chatId,
+            Message replyMsg
+    ) {
         log.info("send message {}", s);
         SendMessage sendMessage = new SendMessage(chatId, s)
                 .enableMarkdown(true);
@@ -141,7 +145,9 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private String getText(Long chatId, boolean good) {
+    private String getText(Long chatId,
+            boolean good
+    ) {
         String msg;
         String suf;
         String end;

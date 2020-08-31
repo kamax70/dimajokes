@@ -18,5 +18,6 @@ public class BotConfig {
     @Data
     public static class ConfigEntry {
         List<String> names;
+        Boolean canBeDisliked = true;
     }
 }
