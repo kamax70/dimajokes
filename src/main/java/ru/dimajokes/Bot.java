@@ -57,10 +57,6 @@ public class Bot extends TelegramLongPollingBot {
                 Message message = update.getMessage();
                 final String messageText = message.getText();
 
-                if (message.hasSticker()) {
-                    System.out.println(message.getSticker().getFileId());
-                }
-
                 if (message.hasText() && messageText.toLowerCase().matches(daPattern)) {
                     sendSticker(daStickerFileId, message.getChatId());
                 }
