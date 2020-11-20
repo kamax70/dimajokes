@@ -16,11 +16,9 @@ import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisConnectionUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import redis.embedded.RedisServer;
 
 import java.time.LocalDate;
@@ -191,23 +189,6 @@ public class BotTest {
         verify(spy, times(5)).execute(isA(SendMessage.class));
     }
 
-    @Test
-    @SneakyThrows
-    public void testDaStickerSupport() {
-        Bot spy = prepareBot();
-        Message message = prepareMessage();
-        Update update = prepareUpdate(message);
-
-        asList("да", "ДА", "Дааа", "Да?", "ДАААА!", ".да", "Да.").forEach(s -> {
-            log.info("trying {}", s);
-
-            when(message.getText()).thenReturn(s);
-            when(message.hasText()).thenReturn(true);
-            spy.onUpdateReceived(update);
-        });
-        verify(spy, times(7)).execute(isA(SendSticker.class));
-    }
-
 
     private Map<String, Integer> getJokeTypesMap(Set<Integer> messageIds) {
         List<String> list = template.opsForHash().multiGet("jokesTypes.0." + DateTimeFormatter.ofPattern("dd.MM.yyyy").format(LocalDate.now()), messageIds.stream().map(Object::toString).collect(Collectors.toList()));
@@ -252,10 +233,8 @@ public class BotTest {
     private Bot prepareBot() {
         Bot spy = spy(bot);
         doReturn(null).when(spy).execute(isA(SendMessage.class));
-        doReturn(null).when(spy).execute(isA(SendSticker.class));
         return spy;
     }
-
 
     @AfterClass
     public static void cleanup() {
