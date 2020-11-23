@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -15,10 +16,14 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisConnectionUtils;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.util.CollectionUtils;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.bots.AbsSender;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import redis.embedded.RedisServer;
 
 import java.net.ServerSocket;
@@ -194,6 +199,26 @@ public class BotTest {
         verify(spy, times(5)).execute(isA(SendMessage.class));
     }
 
+    @Test
+    @SneakyThrows
+    public void testDaStickerSupport() {
+        Bot spy = prepareBot();
+        Message message = prepareMessage();
+        Update update = prepareUpdate(message);
+
+        List<String> matching = asList("да", "ДА", "Дааа", "Да?", "ДАААА!", "Да.", "да))))");
+        List<String> nonMatching = asList("пизда", "когда", "елда", "вода", "погода", "да уж", "всегда", "ну типа да", ",да", "...да");
+
+        ListUtils.union(matching, nonMatching).forEach(s -> {
+            log.info("trying {}", s);
+
+            when(message.getText()).thenReturn(s);
+            when(message.hasText()).thenReturn(true);
+            spy.onUpdateReceived(update);
+        });
+        verify(spy, times(matching.size())).execute(isA(SendSticker.class));
+    }
+
 
     private Map<String, Integer> getJokeTypesMap(Set<Integer> messageIds) {
         List<String> list = template.opsForHash().multiGet("jokesTypes.0." + DateTimeFormatter.ofPattern("dd.MM.yyyy").format(LocalDate.now()), messageIds.stream().map(Object::toString).collect(Collectors.toList()));
@@ -238,6 +263,7 @@ public class BotTest {
     private Bot prepareBot() {
         Bot spy = spy(bot);
         doReturn(null).when(spy).execute(isA(SendMessage.class));
+        doReturn(null).when(spy).execute(isA(SendSticker.class));
         return spy;
     }
 

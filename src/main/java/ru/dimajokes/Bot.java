@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -45,6 +46,8 @@ public class Bot extends TelegramLongPollingBot {
             "беларусия", "белорусия", "белоруссия", "беларуссией"};
     private final String[] belarusReplyPhrases = {"Беларусь!",
             "Беларусь, блядь!", "Беларусь, сука!"};
+    private final String daPattern = "^да+[^\\wа-яё]*?$";
+    private final String daStickerFileId = "CAACAgIAAxkBAAMDX7bMJOFQgcyoFHREeFGqJRAFgqMAAhQAAwqqXhcZv25vek7HrR4E";
     private Set<Long> chatIds;
 
     @Override
@@ -53,6 +56,10 @@ public class Bot extends TelegramLongPollingBot {
             if (update.hasMessage()) {
                 Message message = update.getMessage();
                 final String messageText = message.getText();
+
+                if (message.hasText() && messageText.toLowerCase().matches(daPattern)) {
+                    sendSticker(daStickerFileId, message.getChatId(), message.getMessageId());
+                }
 
                 if (message.hasText() && (
                         messageText.toLowerCase().contains(ukrainianPhrase)
@@ -128,6 +135,19 @@ public class Bot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             log.error("Exception: ", e);
         }
+    }
+
+    private void sendSticker(String stickerId, Long chatId, Integer messageId) {
+       log.info("send sticker {}", stickerId);
+       SendSticker sendSticker = new SendSticker()
+           .setChatId(chatId)
+           .setSticker(stickerId)
+               .setReplyToMessageId(messageId);
+       try {
+           execute(sendSticker);
+       } catch (TelegramApiException e) {
+           log.error("Exception: ", e);
+       }
     }
 
     private void sendMsg(String s,
