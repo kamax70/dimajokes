@@ -26,6 +26,7 @@ import org.telegram.telegrambots.meta.bots.AbsSender;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import redis.embedded.RedisServer;
 
+import java.net.ServerSocket;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -51,11 +52,15 @@ public class BotTest {
     @SneakyThrows
     public static void init() {
         ((Logger) LoggerFactory.getLogger(RedisConnectionUtils.class)).setLevel(Level.OFF); // заебал флудить блять в лог, пиздец
-        server = new RedisServer(6379);
+        Integer port;
+        try(ServerSocket s = new ServerSocket(0)) {
+            port = s.getLocalPort();
+        }
+        server = new RedisServer(port);
         server.start();
         RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration();
         configuration.setHostName("localhost");
-        configuration.setPort(6379);
+        configuration.setPort(port);
         template = new RedisSpringConfiguration(null).redisTemplate(new JedisConnectionFactory(configuration));
         cache = new JokesCache(template);
         bot = new Bot(cache, prepareConfig());
@@ -261,7 +266,6 @@ public class BotTest {
         doReturn(null).when(spy).execute(isA(SendSticker.class));
         return spy;
     }
-
 
     @AfterClass
     public static void cleanup() {
