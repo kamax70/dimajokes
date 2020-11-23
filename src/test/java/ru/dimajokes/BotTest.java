@@ -206,7 +206,7 @@ public class BotTest {
         Message message = prepareMessage();
         Update update = prepareUpdate(message);
 
-        List<String> matching = asList("да", "ДА", "Дааа", "Да?", "ДАААА!", "Да.", "да))))");
+        List<String> matching = asList("да", "ДА", "Дааа", "Да?", "ДАААА!", "Да.", "да))))", "дa", "да_");
         List<String> nonMatching = asList("пизда", "когда", "елда", "вода", "погода", "да уж", "всегда", "ну типа да", ",да", "...да");
 
         ListUtils.union(matching, nonMatching).forEach(s -> {

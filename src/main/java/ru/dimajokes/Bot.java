@@ -46,7 +46,7 @@ public class Bot extends TelegramLongPollingBot {
             "беларусия", "белорусия", "белоруссия", "беларуссией"};
     private final String[] belarusReplyPhrases = {"Беларусь!",
             "Беларусь, блядь!", "Беларусь, сука!"};
-    private final String daPattern = "^да+[^\\wа-яё]*?$";
+    private final String daPattern = "^д[aа]+[^a-zа-яё]*?$";
     private final String daStickerFileId = "CAACAgIAAxkBAAMDX7bMJOFQgcyoFHREeFGqJRAFgqMAAhQAAwqqXhcZv25vek7HrR4E";
     private Set<Long> chatIds;
 
