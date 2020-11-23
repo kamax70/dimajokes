@@ -46,7 +46,7 @@ public class Bot extends TelegramLongPollingBot {
             "беларусия", "белорусия", "белоруссия", "беларуссией"};
     private final String[] belarusReplyPhrases = {"Беларусь!",
             "Беларусь, блядь!", "Беларусь, сука!"};
-    private final String daPattern = "^[Дд][Аа]+[,.!?]*$";
+    private final String daPattern = "^да+[^\\wа-яё]*?$";
     private final String daStickerFileId = "CAACAgIAAxkBAAMDX7bMJOFQgcyoFHREeFGqJRAFgqMAAhQAAwqqXhcZv25vek7HrR4E";
     private Set<Long> chatIds;
 
@@ -58,7 +58,7 @@ public class Bot extends TelegramLongPollingBot {
                 final String messageText = message.getText();
 
                 if (message.hasText() && messageText.toLowerCase().matches(daPattern)) {
-                    sendSticker(daStickerFileId, message.getChatId());
+                    sendSticker(daStickerFileId, message.getChatId(), message.getMessageId());
                 }
 
                 if (message.hasText() && (
@@ -137,13 +137,12 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private void sendSticker(String sticker_id,
-        Long chatId
-    ) {
-       log.info("send sticker {}", sticker_id);
+    private void sendSticker(String stickerId, Long chatId, Integer messageId) {
+       log.info("send sticker {}", stickerId);
        SendSticker sendSticker = new SendSticker()
            .setChatId(chatId)
-           .setSticker(sticker_id);
+           .setSticker(stickerId)
+               .setReplyToMessageId(messageId);
        try {
            execute(sendSticker);
        } catch (TelegramApiException e) {
