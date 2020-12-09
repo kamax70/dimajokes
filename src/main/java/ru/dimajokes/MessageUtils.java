@@ -3,12 +3,14 @@ package ru.dimajokes;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.Math.min;
 import static java.util.Arrays.stream;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.apache.commons.lang3.StringUtils.containsIgnoreCase;
 
 public class MessageUtils {
@@ -39,6 +41,11 @@ public class MessageUtils {
             }
         }
         return result;
+    }
+
+    public static void executeWithProbability(Float probability, Runnable action) {
+        if (current().nextFloat() <= probability)
+            action.run();
     }
 
     // определяем шо там по слову "шутка"

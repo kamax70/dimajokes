@@ -63,7 +63,7 @@ public class BotTest {
         configuration.setPort(port);
         template = new RedisSpringConfiguration(null).redisTemplate(new JedisConnectionFactory(configuration));
         cache = new JokesCache(template);
-        bot = new Bot(cache, prepareConfig());
+        bot = new Bot(cache, prepareConfig(), false);
     }
 
     @Test
