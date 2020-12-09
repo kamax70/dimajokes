@@ -32,7 +32,7 @@ public class BotInitializer implements ApplicationListener<ContextStoppedEvent> 
         ApiContextInitializer.init();
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
         try {
-            Bot bot = new Bot(jokesCache, config);
+            Bot bot = new Bot(jokesCache, config, true);
             botSession = telegramBotsApi.registerBot(bot);
         } catch (TelegramApiRequestException e) {
             log.error("Error on init telegram bot", e);

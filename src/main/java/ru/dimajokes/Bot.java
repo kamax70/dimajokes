@@ -1,6 +1,5 @@
 package ru.dimajokes;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -17,14 +16,21 @@ import java.util.function.Function;
 
 import static java.lang.String.format;
 import static java.util.concurrent.ThreadLocalRandom.current;
+import static ru.dimajokes.MessageUtils.executeWithProbability;
 import static ru.dimajokes.MessageUtils.testStringForKeywords;
 
 @Slf4j
-@RequiredArgsConstructor
 public class Bot extends TelegramLongPollingBot {
 
     private final JokesCache jokesCache;
     private final BotConfig config;
+    private final Float probability;
+
+    public Bot(JokesCache jokesCache, BotConfig config, Boolean useProbabilities) {
+        this.jokesCache = jokesCache;
+        this.config = config;
+        this.probability = useProbabilities ? 0.3f : 1f;
+    }
 
     private final String[] goodMsg = {"Да ладно, %s опять пошутил! ",
             "Остановите его! Снова юмор! "};
@@ -48,6 +54,7 @@ public class Bot extends TelegramLongPollingBot {
             "Беларусь, блядь!", "Беларусь, сука!"};
     private final String daPattern = "^д[aа]+[^a-zа-яё]*?$";
     private final String daStickerFileId = "CAACAgIAAxkBAAMDX7bMJOFQgcyoFHREeFGqJRAFgqMAAhQAAwqqXhcZv25vek7HrR4E";
+
     private Set<Long> chatIds;
 
     @Override
@@ -58,7 +65,7 @@ public class Bot extends TelegramLongPollingBot {
                 final String messageText = message.getText();
 
                 if (message.hasText() && messageText.toLowerCase().matches(daPattern)) {
-                    sendSticker(daStickerFileId, message.getChatId(), message.getMessageId());
+                    executeWithProbability(probability, () -> sendSticker(daStickerFileId, message.getChatId(), message.getMessageId()));
                 }
 
                 if (message.hasText() && (
