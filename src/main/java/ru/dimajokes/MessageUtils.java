@@ -48,6 +48,10 @@ public class MessageUtils {
             action.run();
     }
 
+    public static void executeAnyRandomly(Runnable... action) {
+        action[current().nextInt(action.length)].run();
+    }
+
     // определяем шо там по слову "шутка"
     private static Optional<JokeType> determineJokeKeyword(String text) {
         String[] keywords = {"шутка", "шутейка"};

@@ -11,6 +11,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
+import org.mockito.invocation.Invocation;
+import org.mockito.verification.VerificationMode;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
@@ -164,7 +167,10 @@ public class BotTest {
         Update update = prepareUpdate(message);
         Set<Integer> messageIds = newHashSet();
 
-        asList("Слава УкРаИне и героям", "дуд лох", "еще какойто текст", "шо", "слава УКРАИНЕ", " ", "украине слава", "слава Украине!").forEach(s -> {
+        List<String> positive = asList("Слава УкРаИне и героям", "слава УКРАИНЕ", "украине слава", "слава Украине!", "Слава украине.");
+        List<String> negative = asList("дуд лох", "еще какойто текст", "шо", " ");
+
+        ListUtils.union(positive, negative).forEach(s -> {
             log.info("trying {}", s);
 
             when(message.getText()).thenReturn(s);
@@ -177,7 +183,12 @@ public class BotTest {
             when(message.hasVideo()).thenReturn(s.isEmpty());
             spy.onUpdateReceived(update);
         });
-        verify(spy, times(4)).execute(isA(SendMessage.class));
+        verify(spy, Mockito.atMost(positive.size())).execute(isA(SendMessage.class)); // atMost here is just to set isVerified marker
+        verify(spy, Mockito.atMost(positive.size())).execute(isA(SendSticker.class)); // atMost here is just to set isVerified marker
+        long count = Mockito.mockingDetails(spy).getInvocations().stream()
+                .filter(Invocation::isVerified)
+                .count();
+        assertEquals(positive.size(), count);
     }
 
     @Test
@@ -217,6 +228,26 @@ public class BotTest {
             spy.onUpdateReceived(update);
         });
         verify(spy, times(matching.size())).execute(isA(SendSticker.class));
+    }
+
+    @Test
+    @SneakyThrows
+    public void testNetMessageSupport() {
+        Bot spy = prepareBot();
+        Message message = prepareMessage();
+        Update update = prepareUpdate(message);
+
+        List<String> matching = asList("нет", "НЕТ", "неееет", "нет?", "НЕЕЕЕЕТ!", "Нет.", "нет))))", "нeт", "нет_");
+        List<String> nonMatching = asList("минет", "кабинет", "кларнет", "ронет", "нетраннер", "рунет", "ыфванетфыва");
+
+        ListUtils.union(matching, nonMatching).forEach(s -> {
+            log.info("trying {}", s);
+
+            when(message.getText()).thenReturn(s);
+            when(message.hasText()).thenReturn(true);
+            spy.onUpdateReceived(update);
+        });
+        verify(spy, times(matching.size())).execute(isA(SendMessage.class));
     }
 
 
