@@ -24,6 +24,7 @@ telegram:
       names:
         - Иск
     458309789:
+      can-be-disliked: false
       names:
         - Дима
         - Дмитрий
