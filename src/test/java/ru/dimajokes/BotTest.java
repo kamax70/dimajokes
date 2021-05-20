@@ -238,7 +238,7 @@ public class BotTest {
         Update update = prepareUpdate(message);
 
         List<String> matching = asList("нет", "НЕТ", "неееет", "нет?", "НЕЕЕЕЕТ!", "Нет.", "нет))))", "нeт", "нет_");
-        List<String> nonMatching = asList("минет", "кабинет", "кларнет", "ронет", "нетраннер", "рунет", "ыфванетфыва");
+        List<String> nonMatching = asList("минет","нет 10", "кабинет", "кларнет", "ронет", "нетраннер", "рунет", "ыфванетфыва");
 
         ListUtils.union(matching, nonMatching).forEach(s -> {
             log.info("trying {}", s);

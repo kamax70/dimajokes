@@ -52,7 +52,7 @@ public class Bot extends TelegramLongPollingBot {
     private final String[] belarusReplyPhrases = {"Беларусь!",
             "Беларусь, блядь!", "Беларусь, сука!"};
     private final String daPattern = "^д[aа]+[^a-zа-яё]*?$";
-    private final String netPattern = "^н[еe]+т[^a-zа-яё]*?$";
+    private final String netPattern = "^н[еe]+т[^a-zа-яё0-9]*?$";
     private final String daStickerFileId = "CAACAgIAAxkBAAMDX7bMJOFQgcyoFHREeFGqJRAFgqMAAhQAAwqqXhcZv25vek7HrR4E";
     private final String ukraineStickerFileId = "CAACAgIAAxkBAAIdzl_XhJ0ZpBgkFwUikvcywOBcnTpcAAJDAAN46JAT00Q3cg6EdRceBA";
 
@@ -69,7 +69,7 @@ public class Bot extends TelegramLongPollingBot {
                     executeWithProbability(probability, () -> sendSticker(daStickerFileId, message.getChatId(), message.getMessageId()));
                 }
 
-                if (message.hasText() && messageText.toLowerCase().matches(netPattern)) {
+                if (message.hasText() && messageText.toLowerCase().trim().matches(netPattern)) {
                     executeWithProbability(probability, () -> sendMsg("Пидора ответ.", message.getChatId(), message));
                 }
 
