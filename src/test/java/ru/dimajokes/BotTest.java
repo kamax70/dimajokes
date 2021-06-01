@@ -198,13 +198,12 @@ public class BotTest {
         Message message = prepareMessage();
         Update update = prepareUpdate(message);
 
-        asList("беларуссия", "беларусии", "еще какойто текст", "беларусия", "беларусь", " ", "беларуссия", "белоруссия").forEach(s -> {
-            log.info("trying {}", s);
+        asList("беларуссия", "беларусии", "еще какойто текст", "беларусия", "беларусь", " ", "беларуссия", "белоруссия").forEach(input -> {
+            log.info("trying {}", input);
 
-            when(message.getText()).thenReturn(s);
 
             when(message.hasText()).thenReturn(true);
-            when(message.getText()).thenReturn(s);
+            when(message.getText()).thenReturn(input);
             spy.onUpdateReceived(update);
         });
         verify(spy, times(5)).execute(isA(SendMessage.class));
