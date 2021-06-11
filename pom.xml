@@ -36,12 +36,12 @@
 		<dependency>
 			<groupId>org.telegram</groupId>
 			<artifactId>telegrambots</artifactId>
-			<version>4.2</version>
+			<version>5.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.telegram</groupId>
 			<artifactId>telegrambotsextensions</artifactId>
-			<version>4.2</version>
+			<version>5.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>

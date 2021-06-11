@@ -1,18 +1,23 @@
 package ru.dimajokes;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
+import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdministrators;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.*;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.dimajokes.featuretoggle.Feature;
+import ru.dimajokes.featuretoggle.FeatureToggleService;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.util.concurrent.ThreadLocalRandom.current;
@@ -24,11 +29,14 @@ public class Bot extends TelegramLongPollingBot {
     private final JokesCache jokesCache;
     private final BotConfig config;
     private final Float probability;
+    private final FeatureToggleService featureToggleService;
 
-    public Bot(JokesCache jokesCache, BotConfig config, Boolean useProbabilities) {
+    public Bot(JokesCache jokesCache, BotConfig config, Boolean useProbabilities,
+            FeatureToggleService featureToggleService) {
         this.jokesCache = jokesCache;
         this.config = config;
         this.probability = useProbabilities ? 0.3f : 1f;
+        this.featureToggleService = featureToggleService;
     }
 
     private final String[] goodMsg = {"Да ладно, %s опять пошутил! ",
@@ -65,11 +73,24 @@ public class Bot extends TelegramLongPollingBot {
                 Message message = update.getMessage();
                 final String messageText = message.getText();
 
-                if (message.hasText() && messageText.toLowerCase().matches(daPattern)) {
+                if (message.hasText() && messageText.startsWith("/configure") && userIsAdmin(message.getChatId(), message.getFrom())) {
+                    execute(SendMessage.builder()
+                            .chatId(message.getChatId().toString())
+                            .text("Выберите фичу которую вы хотите включить/выключить")
+                            .replyMarkup(InlineKeyboardMarkup.builder().keyboard(buildKeyboard()).build())
+                            .build());
+                }
+
+                if (message.hasText()
+                        && messageText.toLowerCase().matches(daPattern)
+                        && featureToggleService.isEnabled(Feature.DA, update.getMessage().getChatId())) {
                     executeWithProbability(probability, () -> sendSticker(daStickerFileId, message.getChatId(), message.getMessageId()));
                 }
 
-                if (message.hasText() && messageText.toLowerCase().trim().matches(netPattern)) {
+                if (message.hasText()
+                        && messageText.toLowerCase().trim().matches(netPattern)
+                        && featureToggleService.isEnabled(Feature.NET, update.getMessage().getChatId())
+                ) {
                     executeWithProbability(probability, () -> sendMsg("Пидора ответ.", message.getChatId(), message));
                 }
 
@@ -105,11 +126,11 @@ public class Bot extends TelegramLongPollingBot {
                 }
                 Optional.ofNullable(message.getReplyToMessage())
                         .filter(m -> chatIds
-                                .contains(m.getFrom().getId().longValue()))
+                                .contains(m.getFrom().getId()))
                         .ifPresent(reply -> {
                             MessageUtils.JokeType jokeType = testStringForKeywords(message.getText());
                             log.info("joke type of {} is {}", message.getText(), jokeType);
-                            Long chatId = reply.getFrom().getId().longValue();
+                            Long chatId = reply.getFrom().getId();
                             BotConfig.ConfigEntry joker = config.getJokers().get(chatId);
                             switch (jokeType) {
                                 case GOOD:
@@ -133,18 +154,49 @@ public class Bot extends TelegramLongPollingBot {
                                     break;
                             }
                         });
+            } else if (update.hasCallbackQuery()) {
+                CallbackQuery query = update.getCallbackQuery();
+                if (query.getData().contains("toggle_") && userIsAdmin(query.getMessage().getChatId(), query.getFrom())) {
+                    Long chatId = query.getMessage().getChatId();
+                    String featureStr = StringUtils.substringAfter(query.getData(), "toggle_");
+                    Feature feature = Feature.valueOf(featureStr);
+                    boolean b = featureToggleService.toggleFeature(feature, chatId);
+                    execute(AnswerCallbackQuery.builder().callbackQueryId(query.getId()).text("Фича " + feature.humanReadable + " теперь " + (b ? "включена" : "выключена")).build());
+                }
             }
         } catch (Exception e) {
             log.error("Error processing message", e);
         }
     }
 
+    private Collection<? extends List<InlineKeyboardButton>> buildKeyboard() {
+        List<InlineKeyboardButton> buttons = EnumSet.allOf(Feature.class).stream()
+                .map(it -> InlineKeyboardButton.builder()
+                        .text("\"" + it.humanReadable + "\"")
+                        .callbackData("toggle_" + it)
+                        .build())
+                .collect(Collectors.toList());
+        return Collections.singletonList(buttons);
+    }
+
+    @SneakyThrows
+    private boolean userIsAdmin(Long chatId, User from) {
+        ArrayList<ChatMember> admins = execute(new GetChatAdministrators() {{
+            setChatId(chatId.toString());
+        }});
+        Optional<ChatMember> chatMemberOptional = admins.stream().filter(it -> it.getUser().getId().equals(from.getId())).findFirst();
+        if (chatMemberOptional.isPresent()) {
+            ChatMember admin = chatMemberOptional.get();
+            return admin.getStatus().equals("creator") || admin.getCanChangeInfo();
+        }
+        return false;
+    }
+
     private void sendMsg(String s,
             Long chatId
     ) {
         log.info("send message {}", s);
-        SendMessage sendMessage = new SendMessage(chatId, s)
-                .enableMarkdown(true);
+        SendMessage sendMessage = new SendMessage(chatId.toString(), s){{enableMarkdown(true);}};
         try {
             execute(sendMessage);
         } catch (TelegramApiException e) {
@@ -154,10 +206,11 @@ public class Bot extends TelegramLongPollingBot {
 
     private void sendSticker(String stickerId, Long chatId, Integer messageId) {
        log.info("send sticker {}", stickerId);
-       SendSticker sendSticker = new SendSticker()
-           .setChatId(chatId)
-           .setSticker(stickerId)
-               .setReplyToMessageId(messageId);
+       SendSticker sendSticker = new SendSticker() {{
+           setChatId(chatId.toString());
+           setSticker(new InputFile(stickerId));
+           setReplyToMessageId(messageId);
+       }};
        try {
            execute(sendSticker);
        } catch (TelegramApiException e) {
@@ -170,8 +223,7 @@ public class Bot extends TelegramLongPollingBot {
             Message replyMsg
     ) {
         log.info("send message {}", s);
-        SendMessage sendMessage = new SendMessage(chatId, s)
-                .enableMarkdown(true);
+        SendMessage sendMessage = new SendMessage(chatId.toString(), s){{enableMarkdown(true);}};
         sendMessage.setReplyToMessageId(replyMsg.getMessageId());
         try {
             execute(sendMessage);
