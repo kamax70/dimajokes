@@ -13,21 +13,18 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 import org.mockito.invocation.Invocation;
-import org.mockito.verification.VerificationMode;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisConnectionUtils;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.util.CollectionUtils;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
-import org.telegram.telegrambots.meta.bots.AbsSender;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import redis.embedded.RedisServer;
+import ru.dimajokes.featuretoggle.FeatureToggleService;
 
 import java.net.ServerSocket;
 import java.time.LocalDate;
@@ -66,7 +63,9 @@ public class BotTest {
         configuration.setPort(port);
         template = new RedisSpringConfiguration(null).redisTemplate(new JedisConnectionFactory(configuration));
         cache = new JokesCache(template);
-        bot = new Bot(cache, prepareConfig(), false);
+        FeatureToggleService mock = mock(FeatureToggleService.class);
+        when(mock.isEnabled(any(), any())).thenReturn(true);
+        bot = new Bot(cache, prepareConfig(), false, mock);
     }
 
     @Test
@@ -269,7 +268,7 @@ public class BotTest {
         when(message.getFrom()).thenReturn(user);
         when(message.getMessageId()).thenReturn(ThreadLocalRandom.current().nextInt(1000));
         when(message.getChatId()).thenReturn(0L);
-        when(user.getId()).thenReturn(0);
+        when(user.getId()).thenReturn(0L);
         return message;
     }
 
