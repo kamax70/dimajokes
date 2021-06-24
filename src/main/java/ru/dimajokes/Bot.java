@@ -49,7 +49,7 @@ public class Bot extends TelegramLongPollingBot {
             "Счетчик улетает в космос! "};
     private final String[] badSuffix = {"Давай, соберись. ",
             "Попробуй еще раз, что-ли... "};
-    private final String goodEnd = " раз за день! ";
+    private final String goodEnd = "-й раз за день! ";
     private final String motivation = "Еще чуть-чуть, и ты выйдешь в плюс!";
     private final Function<Long, String> badEnd = l -> format(
             "Счетчик опустился до %d =\\", l);
@@ -187,11 +187,13 @@ public class Bot extends TelegramLongPollingBot {
     private Collection<? extends List<InlineKeyboardButton>> buildKeyboard(Map<Feature, Boolean> status) {
         return status.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
-                .map(it -> InlineKeyboardButton.builder()
-                        .text(it.getKey().humanReadable + " " + (it.getValue() ? "✅" : "❌"))
-                        .callbackData("toggle_" + it.getKey())
-                        .build())
-                .map(Collections::singletonList)
+                .map(it -> {
+                    InlineKeyboardButton functionalButton = InlineKeyboardButton.builder()
+                            .text(it.getKey().humanReadable + " " + (it.getValue() ? "(включено)" : "(выключено)"))
+                            .callbackData("toggle_" + it.getKey())
+                            .build();
+                    return Collections.singletonList(functionalButton);
+                })
                 .collect(Collectors.toList());
     }
 
