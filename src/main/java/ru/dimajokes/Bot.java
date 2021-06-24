@@ -3,11 +3,13 @@ package ru.dimajokes;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdministrators;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -74,10 +76,11 @@ public class Bot extends TelegramLongPollingBot {
                 final String messageText = message.getText();
 
                 if (message.hasText() && messageText.startsWith("/configure") && userIsAdmin(message.getChatId(), message.getFrom())) {
+                    Map<Feature, Boolean> status = getFeaturesStatus(message.getChatId());
                     execute(SendMessage.builder()
                             .chatId(message.getChatId().toString())
                             .text("Выберите фичу которую вы хотите включить/выключить")
-                            .replyMarkup(InlineKeyboardMarkup.builder().keyboard(buildKeyboard()).build())
+                            .replyMarkup(InlineKeyboardMarkup.builder().keyboard(buildKeyboard(status)).build())
                             .build());
                 }
 
@@ -160,8 +163,13 @@ public class Bot extends TelegramLongPollingBot {
                     Long chatId = query.getMessage().getChatId();
                     String featureStr = StringUtils.substringAfter(query.getData(), "toggle_");
                     Feature feature = Feature.valueOf(featureStr);
-                    boolean b = featureToggleService.toggleFeature(feature, chatId);
-                    execute(AnswerCallbackQuery.builder().callbackQueryId(query.getId()).text("Фича " + feature.humanReadable + " теперь " + (b ? "включена" : "выключена")).build());
+                    featureToggleService.toggleFeature(feature, chatId);
+                    execute(AnswerCallbackQuery.builder().callbackQueryId(query.getId()).build());
+                    execute(EditMessageReplyMarkup.builder()
+                            .chatId(query.getMessage().getChatId().toString())
+                            .messageId(query.getMessage().getMessageId())
+                            .replyMarkup(InlineKeyboardMarkup.builder().keyboard(buildKeyboard(getFeaturesStatus(query.getMessage().getChatId()))).build())
+                            .build());
                 }
             }
         } catch (Exception e) {
@@ -169,14 +177,22 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private Collection<? extends List<InlineKeyboardButton>> buildKeyboard() {
-        List<InlineKeyboardButton> buttons = EnumSet.allOf(Feature.class).stream()
+    private Map<Feature, Boolean> getFeaturesStatus(Long chatId) {
+        return EnumSet.allOf(Feature.class)
+                .stream()
+                .map(it -> Pair.of(it, featureToggleService.isEnabled(it, chatId)))
+                .collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
+    }
+
+    private Collection<? extends List<InlineKeyboardButton>> buildKeyboard(Map<Feature, Boolean> status) {
+        return status.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
                 .map(it -> InlineKeyboardButton.builder()
-                        .text("\"" + it.humanReadable + "\"")
-                        .callbackData("toggle_" + it)
+                        .text(it.getKey().humanReadable + " " + (it.getValue() ? "✅" : "❌"))
+                        .callbackData("toggle_" + it.getKey())
                         .build())
+                .map(Collections::singletonList)
                 .collect(Collectors.toList());
-        return Collections.singletonList(buttons);
     }
 
     @SneakyThrows

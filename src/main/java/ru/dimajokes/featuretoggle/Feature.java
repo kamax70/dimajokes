@@ -1,7 +1,7 @@
 package ru.dimajokes.featuretoggle;
 
 public enum Feature {
-    DA("да"), NET("нет");
+    DA("да - пизда"), NET("нет - пидора ответ");
 
     public String humanReadable;
 
