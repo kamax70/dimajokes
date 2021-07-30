@@ -101,10 +101,14 @@ public class Bot extends TelegramLongPollingBot {
                         messageText.toLowerCase().contains(ukrainianPhrase)
                                 || messageText.toLowerCase()
                                 .contains(revertedUkrainianPhrase))) {
-                    executeAnyRandomly(
-                            () -> sendMsg(ukrainianReplyPhrase, message.getChatId(), message),
-                            () -> sendSticker(ukraineStickerFileId, message.getChatId(), message.getMessageId())
-                    );
+                    if (featureToggleService.isEnabled(Feature.UKRAINE_STICKER, update.getMessage().getChatId())) {
+                        executeAnyRandomly(
+                                () -> sendMsg(ukrainianReplyPhrase, message.getChatId(), message),
+                                () -> sendSticker(ukraineStickerFileId, message.getChatId(), message.getMessageId())
+                        );
+                    } else {
+                        sendMsg(ukrainianReplyPhrase, message.getChatId(), message);
+                    }
                     return;
                 }
 
