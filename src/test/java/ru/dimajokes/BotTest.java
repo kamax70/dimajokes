@@ -20,6 +20,8 @@ import org.springframework.data.redis.core.RedisConnectionUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -43,6 +45,7 @@ import static org.mockito.Mockito.*;
 @Slf4j
 public class BotTest {
 
+    private static final long toporChatId = -1001288489154L;
     private static Bot bot;
     private static JokesCache cache;
     private static RedisTemplate template;
@@ -66,6 +69,19 @@ public class BotTest {
         FeatureToggleService mock = mock(FeatureToggleService.class);
         when(mock.isEnabled(any(), any())).thenReturn(true);
         bot = new Bot(cache, prepareConfig(), false, mock);
+    }
+
+    @Test
+    @SneakyThrows
+    public void testToporRemove() {
+        template.opsForValue().set(cache.getKey(0L), 0);
+        Bot spy = prepareBot();
+        Message message = prepareMessage();
+        Chat forwardedFromChat = prepareForwardFromChat(toporChatId);
+        when(message.getForwardFromChat()).thenReturn(forwardedFromChat);
+        Update update = prepareUpdate(message);
+        spy.onUpdateReceived(update);
+        verify(spy, times(1)).execute(isA(DeleteMessage.class));
     }
 
     @Test
@@ -270,6 +286,12 @@ public class BotTest {
         when(message.getChatId()).thenReturn(0L);
         when(user.getId()).thenReturn(0L);
         return message;
+    }
+
+    private Chat prepareForwardFromChat(long chatId) {
+        Chat chat = mock(Chat.class);
+        when(chat.getId()).thenReturn(chatId);
+        return chat;
     }
 
     private static BotConfig prepareConfig() {

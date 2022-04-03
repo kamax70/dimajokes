@@ -1,5 +1,6 @@
 package ru.dimajokes;
 
+import com.google.common.collect.ImmutableSet;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -9,6 +10,7 @@ import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdministrators;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -65,6 +67,7 @@ public class Bot extends TelegramLongPollingBot {
     private final String netPattern = "^н[еe]+т[^a-zа-яё0-9]*?$";
     private final String daStickerFileId = "CAACAgIAAxkBAAMDX7bMJOFQgcyoFHREeFGqJRAFgqMAAhQAAwqqXhcZv25vek7HrR4E";
     private final String ukraineStickerFileId = "CAACAgIAAxkBAAIdzl_XhJ0ZpBgkFwUikvcywOBcnTpcAAJDAAN46JAT00Q3cg6EdRceBA";
+    private final Set<Long> toporChatIds = ImmutableSet.of(-1001288489154L, -1001576707367L, -1001237513492L);
 
     private Set<Long> chatIds;
 
@@ -75,6 +78,15 @@ public class Bot extends TelegramLongPollingBot {
                 Message message = update.getMessage();
                 final String messageText = message.getText();
 
+                if (Objects.nonNull(message.getForwardFromChat())
+                        && toporChatIds.contains(message.getForwardFromChat().getId())
+                        && featureToggleService.isEnabled(Feature.TOPOR_CLEANER, message.getChatId())) {
+                    execute(
+                            DeleteMessage.builder()
+                                    .chatId(message.getChatId().toString())
+                                    .messageId(message.getMessageId()).build()
+                    );
+                }
                 if (message.hasText() && messageText.startsWith("/configure") && userIsAdmin(message.getChatId(), message.getFrom())) {
                     Map<Feature, Boolean> status = getFeaturesStatus(message.getChatId());
                     execute(SendMessage.builder()
